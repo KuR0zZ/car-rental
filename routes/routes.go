@@ -2,7 +2,9 @@ package routes
 
 import (
 	config "car-rental/config/database"
-	"car-rental/handler"
+	"car-rental/controller"
+	"car-rental/repository"
+	"car-rental/service"
 
 	"github.com/labstack/echo/v4"
 )
@@ -10,10 +12,21 @@ import (
 func Init(e *echo.Echo) {
 	db := config.InitDB()
 
-	handler := handler.NewHandlerImpl(db)
+	// Initialize Repository
+	userRepository := repository.NewUserRepository(db)
+	carRepository := repository.NewCarRepository(db)
+	rentalRepository := repository.NewRentalRepository(db)
 
-	e.POST("/users/register", handler.Register)
-	e.POST("/users/login", handler.Login)
-	e.POST("/users/deposit", handler.Deposit)
-	e.POST("/rentals", handler.Rent)
+	// Initialize Service
+	rentalService := service.NewRentService(carRepository, userRepository, rentalRepository)
+	userService := service.NewUserService(userRepository)
+
+	// Initialize Controller
+	rentalController := controller.NewRentController(rentalService)
+	userController := controller.NewUserController(userService)
+
+	e.POST("/users/register", userController.Register)
+	e.POST("/users/login", userController.Login)
+	e.POST("/users/deposit", userController.Deposit)
+	e.POST("/rentals", rentalController.Rent)
 }
