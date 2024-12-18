@@ -15,4 +15,5 @@ func Init(e *echo.Echo) {
 	e.POST("/users/register", handler.Register)
 	e.POST("/users/login", handler.Login)
 	e.POST("/users/deposit", handler.Deposit)
+	e.POST("/rentals", handler.Rent)
 }

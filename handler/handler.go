@@ -21,6 +21,12 @@ type Handler interface {
 	Register(c echo.Context) error
 	Login(c echo.Context) error
 	Deposit(c echo.Context) error
+	Rent(c echo.Context) error
+	// GetAllCar(c echo.Context) error
+	// GetCarById(c echo.Context) error
+	// GetCarByCategory(c echo.Context) error
+	// GetCurrentRent(c echo.Context) error
+	// GetRentHistory(c echo.Context) error
 }
 
 type HandlerImpl struct {
@@ -160,6 +166,89 @@ func (h *HandlerImpl) Deposit(c echo.Context) error {
 	res := dtos.DepositResponse{
 		Message:       "Successfully Top Up Balance",
 		DepositAmount: user.DepositAmount,
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func (h *HandlerImpl) Rent(c echo.Context) error {
+	// Get request from user request body
+	var req dtos.RentRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
+
+	// Get car availability using car id from request
+	var car models.Car
+	err := h.DB.Take(&car, req.CarID).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+	}
+
+	if car.StockAvailability == 0 {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Car is not available for rent")
+	}
+
+	// Get user id from claims
+	claims, ok := c.Get("user").(jwt.MapClaims)
+	if !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	userID := int(claims["user_id"].(float64))
+
+	// Get user details from database using user id
+	var user models.User
+	err = h.DB.Take(&user, userID).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, err.Error())
+	}
+
+	// Compare user balance with total price from request
+	total_costs := float64(req.Duration) * car.RentalCosts
+	if user.DepositAmount < total_costs {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Balance is not enough")
+	}
+
+	// Deduct user balance & car stock
+	user.DepositAmount -= total_costs
+	car.StockAvailability -= 1
+
+	// Update car stock and user balance
+	err = h.DB.Model(&user).Where("user_id = ?", userID).Update("deposit_amount", user.DepositAmount).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = h.DB.Model(&car).Where("car_id = ?", req.CarID).Update("stock_availability", car.StockAvailability).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	// Insert rent into database
+	rental := models.Rental{
+		UserID:     userID,
+		CarID:      req.CarID,
+		Duration:   req.Duration,
+		TotalCosts: total_costs,
+		Status:     "Active",
+	}
+
+	err = h.DB.Create(&rental).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	res := dtos.RentResponse{
+		ID:     rental.ID,
+		UserID: userID,
+		CarRent: map[string]string{
+			"name":     car.Name,
+			"category": car.Category,
+		},
 	}
 
 	return c.JSON(http.StatusOK, res)
