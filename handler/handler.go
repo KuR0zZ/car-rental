@@ -14,11 +14,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Handler interface {
 	Register(c echo.Context) error
 	Login(c echo.Context) error
+	Deposit(c echo.Context) error
 }
 
 type HandlerImpl struct {
@@ -129,5 +131,36 @@ func (h *HandlerImpl) Login(c echo.Context) error {
 		Message: "Successfully logged in",
 		Token:   tokenString,
 	}
+	return c.JSON(http.StatusOK, res)
+}
+
+func (h *HandlerImpl) Deposit(c echo.Context) error {
+	var req dtos.DepositRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
+
+	claims, ok := c.Get("user").(jwt.MapClaims)
+	if !ok {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	userID := int(claims["user_id"].(float64))
+
+	var user models.User
+	err := h.DB.Model(&user).Clauses(clause.Returning{}).Where("user_id = ?", userID).Update("deposit_amount", gorm.Expr("deposit_amount + ?", req.DepositAmount)).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	res := dtos.DepositResponse{
+		Message:       "Successfully Top Up Balance",
+		DepositAmount: user.DepositAmount,
+	}
+
 	return c.JSON(http.StatusOK, res)
 }

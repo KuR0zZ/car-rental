@@ -13,4 +13,6 @@ func Init(e *echo.Echo) {
 	handler := handler.NewHandlerImpl(db)
 
 	e.POST("/users/register", handler.Register)
+	e.POST("/users/login", handler.Login)
+	e.POST("/users/deposit", handler.Deposit)
 }
