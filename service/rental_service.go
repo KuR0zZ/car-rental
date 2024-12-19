@@ -2,6 +2,7 @@ package service
 
 import (
 	"car-rental/dtos"
+	"car-rental/helper"
 	"car-rental/models"
 	"car-rental/repository"
 	"fmt"
@@ -52,7 +53,7 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 		return nil, err
 	}
 
-	rental := &models.Rental{
+	rental := models.Rental{
 		UserID:     userID,
 		CarID:      req.CarID,
 		Duration:   req.Duration,
@@ -60,7 +61,12 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 		Status:     "Active",
 	}
 
-	err = s.RentalRepo.CreateRental(rental)
+	err = s.RentalRepo.CreateRental(&rental)
+	if err != nil {
+		return nil, err
+	}
+
+	invoice, err := helper.CreateInvoice(*user, rental, *car)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +78,7 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 			"name":     car.Name,
 			"category": car.Category,
 		},
+		InvoiceUrl:    invoice.InvoiceUrl,
 		DepositAmount: user.DepositAmount - totalCosts,
 	}
 

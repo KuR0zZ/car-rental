@@ -1,10 +1,10 @@
 package dtos
 
-type DepositRequest struct {
+type TopUpRequest struct {
 	DepositAmount float64 `json:"deposit_amount" validate:"required"`
 }
 
-type DepositResponse struct {
+type TopUpResponse struct {
 	Message       string  `json:"message"`
 	UserID        int     `json:"user_id"`
 	DepositAmount float64 `json:"deposit_amount"`

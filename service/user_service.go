@@ -19,7 +19,7 @@ import (
 type UserService interface {
 	Register(req dtos.RegisterRequest) (*models.User, error)
 	Login(req dtos.LoginRequest) (string, error)
-	Deposit(req dtos.DepositRequest, userID int) (*models.User, error)
+	TopUp(req dtos.TopUpRequest, userID int) (*models.User, error)
 }
 
 type UserServiceImpl struct {
@@ -59,7 +59,7 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 
 	message := dtos.Message{
 		From: dtos.Email{
-			Email: "hello@demomailtrap.com",
+			Email: "hello@example.com",
 			Name:  "Mailtrap Test",
 		},
 		To: []dtos.Email{
@@ -111,7 +111,7 @@ func (s *UserServiceImpl) Login(req dtos.LoginRequest) (string, error) {
 	return tokenString, nil
 }
 
-func (s *UserServiceImpl) Deposit(req dtos.DepositRequest, userID int) (*models.User, error) {
+func (s *UserServiceImpl) TopUp(req dtos.TopUpRequest, userID int) (*models.User, error) {
 	user, err := s.UserRepo.UpdateUserBalance(userID, req.DepositAmount)
 	if err != nil {
 		return nil, err

@@ -27,7 +27,7 @@ func Init(e *echo.Echo) {
 
 	e.POST("/users/register", userController.Register)
 	e.POST("/users/login", userController.Login)
-	e.POST("/users/deposit", userController.Deposit)
+	e.POST("/users/topup", userController.TopUp)
 	e.POST("/rentals", rentalController.Rent)
 	e.GET("/rentals", rentalController.RentalReport)
 }

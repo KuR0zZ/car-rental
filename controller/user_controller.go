@@ -16,7 +16,7 @@ import (
 type UserController interface {
 	Register(c echo.Context) error
 	Login(c echo.Context) error
-	Deposit(c echo.Context) error
+	TopUp(c echo.Context) error
 }
 
 type UserControllerImpl struct {
@@ -89,8 +89,8 @@ func (ci *UserControllerImpl) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-func (ci *UserControllerImpl) Deposit(c echo.Context) error {
-	var req dtos.DepositRequest
+func (ci *UserControllerImpl) TopUp(c echo.Context) error {
+	var req dtos.TopUpRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
@@ -106,12 +106,12 @@ func (ci *UserControllerImpl) Deposit(c echo.Context) error {
 
 	userID := int(claims["user_id"].(float64))
 
-	user, err := ci.UserService.Deposit(req, userID)
+	user, err := ci.UserService.TopUp(req, userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 	}
 
-	res := dtos.DepositResponse{
+	res := dtos.TopUpResponse{
 		Message:       "Successfully Top Up Balance",
 		UserID:        userID,
 		DepositAmount: user.DepositAmount,
