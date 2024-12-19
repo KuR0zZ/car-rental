@@ -63,7 +63,7 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 			Name:  "Mailtrap Test",
 		},
 		To: []dtos.Email{
-			{Email: "ferdinandeducation8@gmail.com"},
+			{Email: req.Email},
 		},
 		Subject:  "Account Registration",
 		Text:     fmt.Sprintf("A new account with email: %s has been created", req.Email),
