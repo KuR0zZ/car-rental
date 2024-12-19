@@ -5,6 +5,7 @@ import (
 	"car-rental/service"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -31,16 +32,20 @@ func NewUserController(userService service.UserService) UserController {
 func (ci *UserControllerImpl) Register(c echo.Context) error {
 	var req dtos.RegisterRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
 	if err := c.Validate(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request data")
 	}
 
 	user, err := ci.UserService.Register(req)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		if strings.Contains(err.Error(), "email already exists") {
+			return echo.NewHTTPError(http.StatusConflict, "email is already registered")
+		}
+
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 	}
 
 	res := dtos.RegisterResponse{
@@ -59,22 +64,22 @@ func (ci *UserControllerImpl) Login(c echo.Context) error {
 	var req dtos.LoginRequest
 
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
 	if err := c.Validate(&req); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request data")
 	}
 
 	tokenString, err := ci.UserService.Login(req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Invalid email or password")
+			return echo.NewHTTPError(http.StatusNotFound, "user not found")
 		}
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid email or password")
+			return echo.NewHTTPError(http.StatusUnauthorized, "invalid password")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 	}
 
 	res := dtos.LoginResponse{
@@ -87,27 +92,28 @@ func (ci *UserControllerImpl) Login(c echo.Context) error {
 func (ci *UserControllerImpl) Deposit(c echo.Context) error {
 	var req dtos.DepositRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 
 	if err := c.Validate(&req); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid request data")
 	}
 
 	claims, ok := c.Get("user").(jwt.MapClaims)
 	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 	}
 
 	userID := int(claims["user_id"].(float64))
 
 	user, err := ci.UserService.Deposit(req, userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 	}
 
 	res := dtos.DepositResponse{
 		Message:       "Successfully Top Up Balance",
+		UserID:        userID,
 		DepositAmount: user.DepositAmount,
 	}
 

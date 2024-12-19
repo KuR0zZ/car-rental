@@ -6,12 +6,14 @@ import (
 	"car-rental/models"
 	"car-rental/repository"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -31,9 +33,18 @@ func NewUserService(userRepo repository.UserRepository) UserService {
 }
 
 func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, error) {
+	existingUser, err := s.UserRepo.GetUserByEmail(req.Email)
+	if err == nil && existingUser != nil {
+		return nil, fmt.Errorf("email already exists")
+	}
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, err
 	}
 
 	user := models.User{
@@ -43,7 +54,7 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 
 	err = s.UserRepo.CreateUser(&user)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		return nil, err
 	}
 
 	message := dtos.Message{
@@ -61,7 +72,7 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 
 	body, err := helper.EmailNotification(message)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send email notification: %w", err)
+		return nil, err
 	}
 
 	var result dtos.EmailResponse
@@ -71,7 +82,7 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 	}
 
 	if !result.Success {
-		return nil, fmt.Errorf("email error: %s", result.Errors[0])
+		return nil, errors.New(result.Errors[0])
 	}
 
 	return &user, nil
@@ -80,11 +91,11 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 func (s *UserServiceImpl) Login(req dtos.LoginRequest) (string, error) {
 	user, err := s.UserRepo.GetUserByEmail(req.Email)
 	if err != nil {
-		return "", fmt.Errorf("user not found: %w", err)
+		return "", err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return "", fmt.Errorf("password does not match: %w", err)
+		return "", err
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -103,7 +114,7 @@ func (s *UserServiceImpl) Login(req dtos.LoginRequest) (string, error) {
 func (s *UserServiceImpl) Deposit(req dtos.DepositRequest, userID int) (*models.User, error) {
 	user, err := s.UserRepo.UpdateUserBalance(userID, req.DepositAmount)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update user deposit amount: %w", err)
+		return nil, err
 	}
 
 	return user, nil
