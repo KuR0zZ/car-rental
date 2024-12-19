@@ -9,6 +9,7 @@ import (
 
 type RentService interface {
 	RentCar(req dtos.RentRequest, userID int) (*dtos.RentResponse, error)
+	GetRentalReport(UserID int) ([]models.Rental, error)
 }
 
 type RentServiceImpl struct {
@@ -28,14 +29,14 @@ func NewRentService(carRepo repository.CarRepository, userRepo repository.UserRe
 func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentResponse, error) {
 	car, err := s.CarRepo.GetAvailableCarByID(req.CarID)
 	if err != nil {
-		return nil, fmt.Errorf("car not available: %w", err)
+		return nil, fmt.Errorf("car not available")
 	}
 
 	totalCosts := float64(req.Duration) * car.RentalCosts
 
 	user, err := s.UserRepo.GetUserByID(userID)
 	if err != nil {
-		return nil, fmt.Errorf("user not found: %w", err)
+		return nil, err
 	}
 	if user.DepositAmount < totalCosts {
 		return nil, fmt.Errorf("insufficient balance")
@@ -43,12 +44,12 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 
 	err = s.CarRepo.UpdateCarStock(req.CarID, 1)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update car stock: %w", err)
+		return nil, err
 	}
 
 	err = s.UserRepo.DeductUserBalance(userID, totalCosts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update user balance: %w", err)
+		return nil, err
 	}
 
 	rental := &models.Rental{
@@ -61,7 +62,7 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 
 	err = s.RentalRepo.CreateRental(rental)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create rental record: %w", err)
+		return nil, err
 	}
 
 	response := &dtos.RentResponse{
@@ -75,4 +76,13 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 	}
 
 	return response, nil
+}
+
+func (s *RentServiceImpl) GetRentalReport(userID int) ([]models.Rental, error) {
+	rentals, err := s.RentalRepo.GetRentalReport(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return rentals, err
 }

@@ -8,6 +8,7 @@ import (
 
 type RentalRepository interface {
 	CreateRental(rental *models.Rental) error
+	GetRentalReport(UserID int) ([]models.Rental, error)
 }
 
 type RentalRepoImpl struct {
@@ -20,4 +21,15 @@ func NewRentalRepository(db *gorm.DB) RentalRepository {
 
 func (r *RentalRepoImpl) CreateRental(rental *models.Rental) error {
 	return r.DB.Create(rental).Error
+}
+
+func (r *RentalRepoImpl) GetRentalReport(UserID int) ([]models.Rental, error) {
+	var rentals []models.Rental
+
+	err := r.DB.Preload("Car").Where("user_id = ?", UserID).Find(&rentals).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return rentals, nil
 }

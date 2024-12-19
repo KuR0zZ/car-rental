@@ -12,4 +12,5 @@ type Rental struct {
 	Duration   int     `gorm:"column:duration"`
 	TotalCosts float64 `gorm:"column:total_costs"`
 	Status     string  `gorm:"column:status"`
+	Car        Car     `gorm:"foreignKey:CarID;references:ID"`
 }
