@@ -29,6 +29,17 @@ func NewUserController(userService service.UserService) UserController {
 	}
 }
 
+// @Summary      Register a new user
+// @Description  Creates a new user account with the provided details.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dtos.RegisterRequest  true  "Register Request"
+// @Success      201      {object}  dtos.RegisterResponse{message=string,data=models.User}
+// @Failure      400      {object}  dtos.ErrorBadRequest
+// @Failure      409      {object}  dtos.ErrorConflict
+// @Failure      500      {object}  dtos.ErrorInternalServerError
+// @Router       /users/register [post]
 func (ci *UserControllerImpl) Register(c echo.Context) error {
 	var req dtos.RegisterRequest
 	if err := c.Bind(&req); err != nil {
@@ -61,6 +72,18 @@ func (ci *UserControllerImpl) Register(c echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
+// @Summary      User login
+// @Description  Authenticates a user and returns a JWT token.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dtos.LoginRequest  true  "Login Request"
+// @Success      200      {object}  dtos.LoginResponse
+// @Failure      400      {object}  dtos.ErrorBadRequest
+// @Failure      401      {object}  dtos.ErrorUnauthorized
+// @Failure      404      {object}  dtos.ErrorNotFound
+// @Failure      500      {object}  dtos.ErrorInternalServerError
+// @Router       /users/login [post]
 func (ci *UserControllerImpl) Login(c echo.Context) error {
 	var req dtos.LoginRequest
 
@@ -90,6 +113,17 @@ func (ci *UserControllerImpl) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// @Summary      Top up balance
+// @Description  Allows a user to add balance to their account.
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dtos.TopUpRequest  true  "Top Up Request"
+// @Success      200      {object}  dtos.TopUpResponse
+// @Failure      400      {object}  dtos.ErrorBadRequest
+// @Failure      500      {object}  dtos.ErrorInternalServerError
+// @Router       /users/topup [post]
+// @Security     Bearer
 func (ci *UserControllerImpl) TopUp(c echo.Context) error {
 	var req dtos.TopUpRequest
 	if err := c.Bind(&req); err != nil {

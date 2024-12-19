@@ -1,0 +1,372 @@
+definitions:
+  dtos.ErrorBadRequest:
+    properties:
+      message:
+        example: bad request data
+        type: string
+    type: object
+  dtos.ErrorConflict:
+    properties:
+      message:
+        example: email is already registered
+        type: string
+    type: object
+  dtos.ErrorInternalServerError:
+    properties:
+      message:
+        example: internal server error
+        type: string
+    type: object
+  dtos.ErrorNotFound:
+    properties:
+      message:
+        example: data not found
+        type: string
+    type: object
+  dtos.ErrorUnauthorized:
+    properties:
+      message:
+        example: invalid credential
+        type: string
+    type: object
+  dtos.ErrorUnprocessableEntity:
+    properties:
+      message:
+        example: insufficient balance
+        type: string
+    type: object
+  dtos.LoginRequest:
+    properties:
+      email:
+        example: John.Doe@example.com
+        type: string
+      password:
+        example: password123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dtos.LoginResponse:
+    properties:
+      message:
+        example: Successfully logged in
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+    type: object
+  dtos.RegisterRequest:
+    properties:
+      email:
+        example: John.Doe@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: password123
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  dtos.RegisterResponse:
+    properties:
+      data: {}
+      message:
+        example: Successfully Register New User
+        type: string
+    type: object
+  dtos.RentRequest:
+    properties:
+      car_id:
+        example: 1
+        type: integer
+      duration:
+        example: 2
+        type: integer
+    required:
+    - car_id
+    - duration
+    type: object
+  dtos.RentResponse:
+    properties:
+      car_rent: {}
+      deposit_amount:
+        example: 10000
+        type: number
+      end_date:
+        example: "2024-02-03"
+        type: string
+      invoce_url:
+        example: example_url
+        type: string
+      rental_id:
+        example: 1
+        type: integer
+      start_date:
+        example: "2024-02-01"
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  dtos.RentalReportResponse:
+    properties:
+      car_category:
+        example: SUV
+        type: string
+      car_name:
+        example: Mercedes AMG G63
+        type: string
+      duration:
+        example: 2
+        type: integer
+      end_date:
+        example: "2024-02-03"
+        type: string
+      rental_id:
+        example: 1
+        type: integer
+      start_date:
+        example: "2024-02-01"
+        type: string
+      status:
+        example: Active
+        type: string
+      total_costs:
+        example: 10000
+        type: number
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  dtos.TopUpRequest:
+    properties:
+      deposit_amount:
+        example: 100000
+        type: number
+    required:
+    - deposit_amount
+    type: object
+  dtos.TopUpResponse:
+    properties:
+      deposit_amount:
+        example: 100000
+        type: number
+      message:
+        example: Successfully Top Up Balance
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  models.Car:
+    properties:
+      category:
+        example: SUV
+        type: string
+      name:
+        example: Mercedes AMG G63
+        type: string
+    type: object
+  models.User:
+    properties:
+      depositAmount:
+        example: 2000000
+        type: number
+      email:
+        example: John.Doe@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: John Doe
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /rentals/rent:
+    post:
+      consumes:
+      - application/json
+      description: Allows a user to rent a car given a valid request.
+      parameters:
+      - description: Rent Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.RentResponse'
+            - properties:
+                car_rent:
+                  $ref: '#/definitions/models.Car'
+              type: object
+        "400":
+          description: Invalid request body or data
+          schema:
+            $ref: '#/definitions/dtos.ErrorBadRequest'
+        "404":
+          description: Car not available
+          schema:
+            $ref: '#/definitions/dtos.ErrorNotFound'
+        "422":
+          description: Insufficient balance
+          schema:
+            $ref: '#/definitions/dtos.ErrorUnprocessableEntity'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dtos.ErrorInternalServerError'
+      security:
+      - Bearer: []
+      summary: Rent a car
+      tags:
+      - Rentals
+  /rentals/report:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of rentals associated with the user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dtos.RentalReportResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dtos.ErrorInternalServerError'
+      security:
+      - Bearer: []
+      summary: Get rental report
+      tags:
+      - Rentals
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token.
+      parameters:
+      - description: Login Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorBadRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dtos.ErrorUnauthorized'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorNotFound'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorInternalServerError'
+      summary: User login
+      tags:
+      - Users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account with the provided details.
+      parameters:
+      - description: Register Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dtos.RegisterResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+                message:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorBadRequest'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dtos.ErrorConflict'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorInternalServerError'
+      summary: Register a new user
+      tags:
+      - Users
+  /users/topup:
+    post:
+      consumes:
+      - application/json
+      description: Allows a user to add balance to their account.
+      parameters:
+      - description: Top Up Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.TopUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.TopUpResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dtos.ErrorBadRequest'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorInternalServerError'
+      security:
+      - Bearer: []
+      summary: Top up balance
+      tags:
+      - Users
+swagger: "2.0"

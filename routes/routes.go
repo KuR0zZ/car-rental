@@ -6,7 +6,10 @@ import (
 	"car-rental/repository"
 	"car-rental/service"
 
+	_ "car-rental/docs"
+
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 func Init(e *echo.Echo) {
@@ -24,6 +27,8 @@ func Init(e *echo.Echo) {
 	// Initialize Controller
 	rentalController := controller.NewRentController(rentalService)
 	userController := controller.NewUserController(userService)
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	e.POST("/users/register", userController.Register)
 	e.POST("/users/login", userController.Login)

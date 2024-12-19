@@ -25,6 +25,19 @@ func NewRentController(rentService service.RentService) RentalController {
 	}
 }
 
+// @Summary      Rent a car
+// @Description  Allows a user to rent a car given a valid request.
+// @Tags         Rentals
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dtos.RentRequest  true  "Rent Request"
+// @Success      200      {object}  dtos.RentResponse{car_rent=models.Car}
+// @Failure      400      {object}  dtos.ErrorBadRequest  "Invalid request body or data"
+// @Failure      404      {object}  dtos.ErrorNotFound  "Car not available"
+// @Failure      422      {object}  dtos.ErrorUnprocessableEntity "Insufficient balance"
+// @Failure      500      {object}  dtos.ErrorInternalServerError "Internal server error"
+// @Router       /rentals/rent [post]
+// @Security     Bearer
 func (ci *RentalControllerImpl) Rent(c echo.Context) error {
 	var req dtos.RentRequest
 	if err := c.Bind(&req); err != nil {
@@ -56,6 +69,17 @@ func (ci *RentalControllerImpl) Rent(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// RentalReport gets the rental report for the user.
+//
+// @Summary      Get rental report
+// @Description  Retrieves a list of rentals associated with the user.
+// @Tags         Rentals
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}   dtos.RentalReportResponse
+// @Failure      500      {object}  dtos.ErrorInternalServerError "Internal server error"
+// @Router       /rentals/report [get]
+// @Security     Bearer
 func (ci *RentalControllerImpl) RentalReport(c echo.Context) error {
 	claims, ok := c.Get("user").(jwt.MapClaims)
 	if !ok {
@@ -77,6 +101,8 @@ func (ci *RentalControllerImpl) RentalReport(c echo.Context) error {
 			CarName:     rental.Car.Name,
 			CarCategory: rental.Car.Category,
 			Duration:    rental.Duration,
+			StartDate:   rental.StartDate.Format("2006-01-02"),
+			EndDate:     rental.EndDate.Format("2006-01-02"),
 			TotalCosts:  rental.TotalCosts,
 			Status:      rental.Status,
 		})

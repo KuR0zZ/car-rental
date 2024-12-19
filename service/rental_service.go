@@ -60,8 +60,8 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 	rental := models.Rental{
 		UserID:     userID,
 		CarID:      req.CarID,
-		StartDate:  startDate.Format("2006-01-02"),
-		EndDate:    endDate.Format("2006-01-02"),
+		StartDate:  startDate,
+		EndDate:    endDate,
 		Duration:   req.Duration,
 		TotalCosts: totalCosts,
 		Status:     "Active",
@@ -84,8 +84,8 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 			"name":     car.Name,
 			"category": car.Category,
 		},
-		StartDate:     rental.StartDate,
-		EndDate:       rental.EndDate,
+		StartDate:     rental.StartDate.Format("2006-01-02"),
+		EndDate:       rental.EndDate.Format("2006-01-02"),
 		InvoiceUrl:    invoice.InvoiceUrl,
 		DepositAmount: user.DepositAmount - totalCosts,
 	}
