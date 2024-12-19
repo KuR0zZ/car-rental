@@ -15,7 +15,7 @@ func CreateInvoice(user models.User, rental models.Rental, car models.Car) (*mod
 		"description":      "Car Rental Invoice",
 		"invoice_duration": 86400,
 		"customer": map[string]interface{}{
-			"name":  user.Email,
+			"name":  user.Name,
 			"email": user.Email,
 		},
 		"currency": "IDR",

@@ -48,6 +48,7 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 	}
 
 	user := models.User{
+		Name:     req.Name,
 		Email:    req.Email,
 		Password: string(hashPassword),
 	}
@@ -66,7 +67,7 @@ func (s *UserServiceImpl) Register(req dtos.RegisterRequest) (*models.User, erro
 			{Email: req.Email},
 		},
 		Subject:  "Account Registration",
-		Text:     fmt.Sprintf("A new account with email: %s has been created", req.Email),
+		Text:     fmt.Sprintf("Hi %s, you have successfully created a new account", req.Name),
 		Category: "Integration Test",
 	}
 

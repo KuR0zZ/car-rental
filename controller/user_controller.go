@@ -52,6 +52,7 @@ func (ci *UserControllerImpl) Register(c echo.Context) error {
 		Message: "Successfully Register New User",
 		Data: map[string]interface{}{
 			"id":             user.ID,
+			"name":           user.Name,
 			"email":          user.Email,
 			"deposit_amount": user.DepositAmount,
 		},

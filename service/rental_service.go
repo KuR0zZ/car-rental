@@ -6,6 +6,7 @@ import (
 	"car-rental/models"
 	"car-rental/repository"
 	"fmt"
+	"time"
 )
 
 type RentService interface {
@@ -53,9 +54,14 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 		return nil, err
 	}
 
+	startDate := time.Now()
+	endDate := startDate.AddDate(0, 0, req.Duration)
+
 	rental := models.Rental{
 		UserID:     userID,
 		CarID:      req.CarID,
+		StartDate:  startDate.Format("2006-01-02"),
+		EndDate:    endDate.Format("2006-01-02"),
 		Duration:   req.Duration,
 		TotalCosts: totalCosts,
 		Status:     "Active",
@@ -78,6 +84,8 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 			"name":     car.Name,
 			"category": car.Category,
 		},
+		StartDate:     rental.StartDate,
+		EndDate:       rental.EndDate,
 		InvoiceUrl:    invoice.InvoiceUrl,
 		DepositAmount: user.DepositAmount - totalCosts,
 	}
