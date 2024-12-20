@@ -29,8 +29,12 @@ func NewRentService(carRepo repository.CarRepository, userRepo repository.UserRe
 }
 
 func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentResponse, error) {
-	car, err := s.CarRepo.GetAvailableCarByID(req.CarID)
+	car, err := s.CarRepo.GetCarByID(req.CarID)
 	if err != nil {
+		return nil, err
+	}
+
+	if car.StockAvailability == 0 {
 		return nil, fmt.Errorf("car not available")
 	}
 
@@ -78,12 +82,10 @@ func (s *RentServiceImpl) RentCar(req dtos.RentRequest, userID int) (*dtos.RentR
 	}
 
 	response := &dtos.RentResponse{
-		ID:     rental.ID,
-		UserID: userID,
-		CarRent: map[string]string{
-			"name":     car.Name,
-			"category": car.Category,
-		},
+		ID:            rental.ID,
+		UserID:        userID,
+		CarName:       car.Name,
+		CarCategory:   car.Category,
 		StartDate:     rental.StartDate.Format("2006-01-02"),
 		EndDate:       rental.EndDate.Format("2006-01-02"),
 		InvoiceUrl:    invoice.InvoiceUrl,

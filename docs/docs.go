@@ -15,6 +15,101 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/cars": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieves a list of cars",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cars"
+                ],
+                "summary": "Get all cars",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "With the bearer started",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Car"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cars/:id": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Retrieves a car by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Cars"
+                ],
+                "summary": "Get car by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "With the bearer started",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Car"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorNotFound"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dtos.ErrorInternalServerError"
+                        }
+                    }
+                }
+            }
+        },
         "/rentals/rent": {
             "post": {
                 "security": [
@@ -35,6 +130,13 @@ const docTemplate = `{
                 "summary": "Rent a car",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "With the bearer started",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Rent Request",
                         "name": "request",
                         "in": "body",
@@ -45,44 +147,32 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dtos.RentResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "car_rent": {
-                                            "$ref": "#/definitions/models.Car"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/dtos.RentResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request body or data",
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/dtos.ErrorBadRequest"
                         }
                     },
                     "404": {
-                        "description": "Car not available",
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/dtos.ErrorNotFound"
                         }
                     },
                     "422": {
-                        "description": "Insufficient balance",
+                        "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/dtos.ErrorUnprocessableEntity"
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dtos.ErrorInternalServerError"
                         }
@@ -108,6 +198,15 @@ const docTemplate = `{
                     "Rentals"
                 ],
                 "summary": "Get rental report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "With the bearer started",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -119,7 +218,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/dtos.ErrorInternalServerError"
                         }
@@ -271,6 +370,13 @@ const docTemplate = `{
                 ],
                 "summary": "Top up balance",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "With the bearer started",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "Top Up Request",
                         "name": "request",
@@ -441,7 +547,14 @@ const docTemplate = `{
         "dtos.RentResponse": {
             "type": "object",
             "properties": {
-                "car_rent": {},
+                "car_category": {
+                    "type": "string",
+                    "example": "SUV"
+                },
+                "car_name": {
+                    "type": "string",
+                    "example": "Mercedes AMG G63"
+                },
                 "deposit_amount": {
                     "type": "number",
                     "example": 10000
@@ -541,6 +654,10 @@ const docTemplate = `{
         "models.Car": {
             "type": "object",
             "properties": {
+                "car_id": {
+                    "type": "integer",
+                    "example": 1
+                },
                 "category": {
                     "type": "string",
                     "example": "SUV"
@@ -548,6 +665,14 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "Mercedes AMG G63"
+                },
+                "rental_costs": {
+                    "type": "number",
+                    "example": 10000000
+                },
+                "stock_availability": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },

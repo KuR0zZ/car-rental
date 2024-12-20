@@ -23,10 +23,12 @@ func Init(e *echo.Echo) {
 	// Initialize Service
 	rentalService := service.NewRentService(carRepository, userRepository, rentalRepository)
 	userService := service.NewUserService(userRepository)
+	carService := service.NewCarService(carRepository)
 
 	// Initialize Controller
 	rentalController := controller.NewRentController(rentalService)
 	userController := controller.NewUserController(userService)
+	carController := controller.NewCarController(carService)
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
@@ -35,4 +37,6 @@ func Init(e *echo.Echo) {
 	e.POST("/users/topup", userController.TopUp)
 	e.POST("/rentals", rentalController.Rent)
 	e.GET("/rentals", rentalController.RentalReport)
+	e.GET("/cars", carController.GetAllCar)
+	e.GET("/cars/:id", carController.GetCarByID)
 }

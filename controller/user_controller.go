@@ -118,6 +118,7 @@ func (ci *UserControllerImpl) Login(c echo.Context) error {
 // @Tags         Users
 // @Accept       json
 // @Produce      json
+// @Param Authorization header string true "With the bearer started"
 // @Param        request  body      dtos.TopUpRequest  true  "Top Up Request"
 // @Success      200      {object}  dtos.TopUpResponse
 // @Failure      400      {object}  dtos.ErrorBadRequest

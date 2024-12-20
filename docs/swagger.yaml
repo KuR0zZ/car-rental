@@ -93,7 +93,12 @@ definitions:
     type: object
   dtos.RentResponse:
     properties:
-      car_rent: {}
+      car_category:
+        example: SUV
+        type: string
+      car_name:
+        example: Mercedes AMG G63
+        type: string
       deposit_amount:
         example: 10000
         type: number
@@ -165,12 +170,21 @@ definitions:
     type: object
   models.Car:
     properties:
+      car_id:
+        example: 1
+        type: integer
       category:
         example: SUV
         type: string
       name:
         example: Mercedes AMG G63
         type: string
+      rental_costs:
+        example: 10000000
+        type: number
+      stock_availability:
+        example: 3
+        type: integer
     type: object
   models.User:
     properties:
@@ -190,12 +204,77 @@ definitions:
 info:
   contact: {}
 paths:
+  /cars:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of cars
+      parameters:
+      - description: With the bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Car'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorInternalServerError'
+      security:
+      - Bearer: []
+      summary: Get all cars
+      tags:
+      - Cars
+  /cars/:id:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a car by id
+      parameters:
+      - description: With the bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Car'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dtos.ErrorNotFound'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dtos.ErrorInternalServerError'
+      security:
+      - Bearer: []
+      summary: Get car by id
+      tags:
+      - Cars
   /rentals/rent:
     post:
       consumes:
       - application/json
       description: Allows a user to rent a car given a valid request.
       parameters:
+      - description: With the bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Rent Request
         in: body
         name: request
@@ -205,29 +284,24 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            allOf:
-            - $ref: '#/definitions/dtos.RentResponse'
-            - properties:
-                car_rent:
-                  $ref: '#/definitions/models.Car'
-              type: object
+            $ref: '#/definitions/dtos.RentResponse'
         "400":
-          description: Invalid request body or data
+          description: Bad Request
           schema:
             $ref: '#/definitions/dtos.ErrorBadRequest'
         "404":
-          description: Car not available
+          description: Not Found
           schema:
             $ref: '#/definitions/dtos.ErrorNotFound'
         "422":
-          description: Insufficient balance
+          description: Unprocessable Entity
           schema:
             $ref: '#/definitions/dtos.ErrorUnprocessableEntity'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dtos.ErrorInternalServerError'
       security:
@@ -240,6 +314,12 @@ paths:
       consumes:
       - application/json
       description: Retrieves a list of rentals associated with the user.
+      parameters:
+      - description: With the bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -250,7 +330,7 @@ paths:
               $ref: '#/definitions/dtos.RentalReportResponse'
             type: array
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/dtos.ErrorInternalServerError'
       security:
@@ -343,6 +423,11 @@ paths:
       - application/json
       description: Allows a user to add balance to their account.
       parameters:
+      - description: With the bearer started
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Top Up Request
         in: body
         name: request

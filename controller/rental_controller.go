@@ -3,11 +3,13 @@ package controller
 import (
 	"car-rental/dtos"
 	"car-rental/service"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type RentalController interface {
@@ -30,12 +32,13 @@ func NewRentController(rentService service.RentService) RentalController {
 // @Tags         Rentals
 // @Accept       json
 // @Produce      json
+// @Param Authorization header string true "With the bearer started"
 // @Param        request  body      dtos.RentRequest  true  "Rent Request"
-// @Success      200      {object}  dtos.RentResponse{car_rent=models.Car}
-// @Failure      400      {object}  dtos.ErrorBadRequest  "Invalid request body or data"
-// @Failure      404      {object}  dtos.ErrorNotFound  "Car not available"
-// @Failure      422      {object}  dtos.ErrorUnprocessableEntity "Insufficient balance"
-// @Failure      500      {object}  dtos.ErrorInternalServerError "Internal server error"
+// @Success      201      {object}  dtos.RentResponse
+// @Failure      400      {object}  dtos.ErrorBadRequest
+// @Failure      404      {object}  dtos.ErrorNotFound
+// @Failure      422      {object}  dtos.ErrorUnprocessableEntity
+// @Failure      500      {object}  dtos.ErrorInternalServerError
 // @Router       /rentals/rent [post]
 // @Security     Bearer
 func (ci *RentalControllerImpl) Rent(c echo.Context) error {
@@ -57,6 +60,9 @@ func (ci *RentalControllerImpl) Rent(c echo.Context) error {
 
 	res, err := ci.RentService.RentCar(req, userID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "car not found")
+		}
 		if strings.Contains(err.Error(), "car not available") {
 			return echo.NewHTTPError(http.StatusNotFound, "car is not available for rent")
 		}
@@ -66,18 +72,17 @@ func (ci *RentalControllerImpl) Rent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 	}
 
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusCreated, res)
 }
 
-// RentalReport gets the rental report for the user.
-//
 // @Summary      Get rental report
 // @Description  Retrieves a list of rentals associated with the user.
 // @Tags         Rentals
 // @Accept       json
 // @Produce      json
-// @Success      200  {array}   dtos.RentalReportResponse
-// @Failure      500      {object}  dtos.ErrorInternalServerError "Internal server error"
+// @Param Authorization header string true "With the bearer started"
+// @Success      200      {array}   dtos.RentalReportResponse
+// @Failure      500      {object}  dtos.ErrorInternalServerError
 // @Router       /rentals/report [get]
 // @Security     Bearer
 func (ci *RentalControllerImpl) RentalReport(c echo.Context) error {
