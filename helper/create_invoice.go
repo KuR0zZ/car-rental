@@ -22,7 +22,7 @@ func CreateInvoice(user models.User, rental models.Rental, car models.Car) (*mod
 		"items": []interface{}{
 			map[string]interface{}{
 				"name":     car.Name,
-				"quantity": 1,
+				"quantity": rental.Duration,
 				"price":    car.RentalCosts,
 				"category": car.Category,
 			},

@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	if os.Getenv("ENV") == "development" {
+	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
 		if err != nil {
 			log.Println(".env file not found, skipping...")

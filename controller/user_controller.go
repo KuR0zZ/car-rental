@@ -142,6 +142,10 @@ func (ci *UserControllerImpl) TopUp(c echo.Context) error {
 
 	userID := int(claims["user_id"].(float64))
 
+	if req.DepositAmount <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "amount must be greater than zero")
+	}
+
 	user, err := ci.UserService.TopUp(req, userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
